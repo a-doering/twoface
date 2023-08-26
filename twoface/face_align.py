@@ -1,9 +1,10 @@
-import numpy as np
-import cv2
+import json
 
-FACIAL_LANDMARKS_IDXS = {}
-FACIAL_LANDMARKS_IDXS["left_eye"] = (468, 468 + 5)
-FACIAL_LANDMARKS_IDXS["right_eye"] = (468 + 6, 468 + 10)
+import cv2
+import numpy as np
+
+with open("twoface/config.json") as json_file:
+    config = json.load(json_file)
 
 
 class FaceAligner:
@@ -19,22 +20,22 @@ class FaceAligner:
         self.face_width_out = face_width_out
         self.face_height_out = face_height_out if face_height_out else face_width_out
 
-    def align(self, image):
+    def align(self, image, zoom=1.0):
         detection_result = self.detector.detect(image)
         landmarks = detection_result.face_landmarks[0]
         # extract the left and right eye (x, y)-coordinates
-        (left_idx_start, left_idx_end) = FACIAL_LANDMARKS_IDXS["left_eye"]
-        (right_idx_start, right_idx_end) = FACIAL_LANDMARKS_IDXS["right_eye"]
+        (left_idx_start, left_idx_end) = config["facial_landmark_ids"]["left_eye"]
+        (right_idx_start, right_idx_end) = config["facial_landmark_ids"]["right_eye"]
         left_points = np.array(
             [
                 [landmarks[i].x * image.width, landmarks[i].y * image.height]
-                for i in range(left_idx_start, left_idx_end)
+                for i in range(left_idx_start, left_idx_end + 1)
             ]
         )
         right_points = np.array(
             [
                 [landmarks[i].x * image.width, landmarks[i].y * image.height]
-                for i in range(right_idx_start, right_idx_end)
+                for i in range(right_idx_start, right_idx_end + 1)
             ]
         )
 

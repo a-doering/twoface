@@ -1,0 +1,12 @@
+{
+    "facial_landmark_ids": {
+        "left_eye": [
+            468,
+            472
+        ],
+        "right_eye": [
+            473,
+            477
+        ]
+    }
+}
