@@ -11,16 +11,19 @@ class FaceAligner:
     def __init__(
         self,
         detector,
-        left_point_pos_out=(0.4, 0.4),
-        face_width_out=512,
-        face_height_out=None,
+        left_point_pos_out=[0.4, 0.4],
+        width_out=1024,
+        height_out=None,
     ):
         self.detector = detector
         self.left_point_pos_out = left_point_pos_out
-        self.face_width_out = face_width_out
-        self.face_height_out = face_height_out if face_height_out else face_width_out
+        self.width_out = width_out
+        self.height_out = height_out if height_out else width_out
 
-    def align(self, image, zoom=1.0):
+    def align(self, image, zoom=0.0):
+        left_point_pos_out = self.left_point_pos_out.copy()
+        left_point_pos_out[0] -= zoom
+
         detection_result = self.detector.detect(image)
         landmarks = detection_result.face_landmarks[0]
         # extract the left and right eye (x, y)-coordinates
@@ -47,12 +50,12 @@ class FaceAligner:
         angle = np.degrees(np.arctan2(dy, dx))
 
         # Compute output right eye x coordinate
-        right_center_x = 1.0 - self.left_point_pos_out[0]
+        right_center_x = 1.0 - left_point_pos_out[0]
 
         # Compute scale of output image
         dist = np.sqrt((dx**2) + (dy**2))
-        dist_out = right_center_x - self.left_point_pos_out[0]
-        dist_out *= self.face_width_out
+        dist_out = right_center_x - left_point_pos_out[0]
+        dist_out *= self.width_out
         scale = dist_out / dist
 
         # Center between left and right to rotate around
@@ -63,11 +66,15 @@ class FaceAligner:
         rot = cv2.getRotationMatrix2D(center, angle, scale)
 
         # Translation component of matrix
-        tx = self.face_width_out * 0.5
-        ty = self.face_height_out * self.left_point_pos_out[1]
+        tx = self.width_out * 0.5
+        ty = self.height_out * self.left_point_pos_out[1]
         rot[0, 2] += tx - center[0]
         rot[1, 2] += ty - center[1]
 
-        (w, h) = (self.face_width_out, self.face_height_out)
-        output = cv2.warpAffine(image.numpy_view(), rot, (w, h), flags=cv2.INTER_CUBIC)
+        output = cv2.warpAffine(
+            image.numpy_view(),
+            rot,
+            (self.width_out, self.height_out),
+            flags=cv2.INTER_CUBIC,
+        )
         return output

@@ -22,11 +22,11 @@ detector = vision.FaceLandmarker.create_from_options(options)
 fa = FaceAligner(detector)
 
 
-def generate_image(img_a, img_b):
+def generate_image(img_a, img_b, zoom):
     img_a = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_a)
-    out_a = fa.align(img_a)
+    out_a = fa.align(img_a, zoom=zoom)
     img_b = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_b)
-    out_b = fa.align(img_b)
+    out_b = fa.align(img_b, zoom=zoom)
 
     return np.hstack(
         (out_a[:, 0 : out_a.shape[1] // 2], out_b[:, out_b.shape[1] // 2 :])
@@ -42,15 +42,27 @@ with gr.Blocks(theme=my_theme, title="TwoFace") as demo:
         with gr.Column():
             image_input_a = gr.Image(label="Image containing left side of face")
             image_input_b = gr.Image(label="Image containing right side of face")
+            zoom = gr.Slider(
+                minimum=-0.08,
+                maximum=0.08,
+                step=0.01,
+                value=0.0,
+                label="Zoom",
+                info="<-- zoom out | (zoom not linear) | zoom in -->",
+            )
         image_output = gr.Image()
     image_button = gr.Button("Generate TwoFace")
     image_button.click(
-        generate_image, inputs=[image_input_a, image_input_b], outputs=image_output
+        generate_image,
+        inputs=[image_input_a, image_input_b, zoom],
+        outputs=image_output,
     )
 
     image_button_flip = gr.Button("Generate TwoFace with left and right sides flipped")
     image_button_flip.click(
-        generate_image, inputs=[image_input_b, image_input_a], outputs=image_output
+        generate_image,
+        inputs=[image_input_b, image_input_a, zoom],
+        outputs=image_output,
     )
 
     gr.Markdown("Created by [a-doering](https://github.com/a-doering).")
